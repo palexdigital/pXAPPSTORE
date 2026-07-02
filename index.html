@@ -16,331 +16,423 @@
     html, body { min-height: 100vh; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-      background: #2e2a33;
-      color: #f5f5f7;
+      background: #ffffff;
+      color: #1a1a1c;
       overflow-x: hidden;
     }
-    #silk-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     
     .page-container {
       position: relative;
       z-index: 1;
-      min-height: 100vh;
       width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 16px;
     }
 
-    @media (min-width: 1024px) {
-      .page-container {
-        flex-direction: row-reverse;
-        justify-content: space-around;
-        align-items: center;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 40px;
-      }
+    .platform-pill {
+      transition: all 0.2s ease;
+    }
+    .platform-pill.active {
+      background-color: #26004d;
+      color: #ffffff;
     }
 
-    /* iPhone Device Frame Styling */
-    .iphone-mockup {
-      position: relative;
-      width: 375px;
-      height: 812px;
-      background-color: #39045c;
-      border-radius: 45px;
-      box-shadow: 0 50px 100px -20px rgba(0,0,0,0.6), 0 30px 60px -30px rgba(0,0,0,0.7), inset 0 -2px 6px 0 rgba(255,255,255,0.1);
-      border: 12px solid #1a1a1c;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .notch {
-      position: absolute;
-      width: 150px;
-      height: 28px;
-      background-color: #1a1a1c;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      border-bottom-left-radius: 18px;
-      border-bottom-right-radius: 18px;
-      z-index: 50;
-    }
-    .home-indicator {
-      width: 134px;
-      height: 5px;
-      background-color: rgba(255,255,255,0.5);
-      border-radius: 100px;
-    }
-
-    /* WebKit Scrollbar concealment for cleaner App Store layout inside mockup */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* Space Grotesk Font Class Override */
     .space-grotesk { font-family: 'Space Grotesk', sans-serif; }
   </style>
 </head>
-<body class="flex justify-center items-center">
+<body>
 
-  <canvas id="silk-canvas"></canvas>
+  <nav class="border-b border-gray-200 bg-white sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button onclick="toggleSidebar(true)" class="p-2 hover:bg-gray-100 rounded-xl transition-colors text-[#26004d]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+        <span class="space-grotesk text-2xl font-bold tracking-tight text-[#26004d]">
+          paléX <span class="text-purple-600">App Store</span>
+        </span>
+      </div>
+      <div class="relative w-full max-w-md hidden md:block">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="text" id="search-input" placeholder="Search apps or games..." class="w-full bg-gray-100 border border-transparent rounded-full py-2 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-purple-600 transition-colors">
+      </div>
+    </div>
+  </nav>
+
+  <div id="sidebar-overlay" onclick="toggleSidebar(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300 opacity-0"></div>
+  <div id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl border-r border-gray-100 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between p-6">
+    <div class="space-y-8">
+      <div class="flex items-center justify-between">
+        <span class="space-grotesk text-xl font-bold text-[#26004d]">Navigation</span>
+        <button onclick="toggleSidebar(false)" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Platforms</p>
+        <button onclick="filterSidebar('all')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors text-sm">
+          <span></span> <span>All Platforms</span>
+        </button>
+        <button onclick="filterSidebar('android')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors text-sm">
+          <span></span> <span>Android Only</span>
+        </button>
+        <button onclick="filterSidebar('ios')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors text-sm">
+          <span></span> <span>iOS Only</span>
+        </button>
+        <button onclick="filterSidebar('pc')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors text-sm">
+          <span></span> <span>PC Windows Folder</span>
+        </button>
+      </div>
+
+      <div class="space-y-3 pt-4 border-t border-gray-100">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Connect</p>
+        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 font-medium transition-colors text-sm">
+          <span></span> <span>Follow us on Instagram</span>
+        </a>
+        
+        <div class="space-y-1.5 mt-2">
+          <p class="text-[11px] font-semibold text-gray-400 px-1">Get in contact with us:</p>
+          <a href="https://wa.me/27627654746" target="_blank" rel="noopener noreferrer" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-gray-50 text-zinc-700 text-sm transition-colors">
+            <span></span> <span>WhatsApp: 0627654746</span>
+          </a>
+          <a href="mailto:palexonline@gmail.com" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-gray-50 text-zinc-700 text-sm transition-colors">
+            <span></span> <span>palexonline@gmail.com</span>
+          </a>
+        </div>
+
+        <a href="https://palexdigital.pages.dev/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors mt-4">
+          <span></span> <span>Learn more about us</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
+      <a href="https://palexdigital.pages.dev/" target="_blank" rel="noopener noreferrer" class="hover:text-purple-700 transition-colors">
+        Developed By palexdigital
+      </a>
+    </div>
+  </div>
 
   <div class="page-container">
     
-    <header class="text-center lg:text-right mb-10 lg:mb-0 max-w-md lg:max-w-lg z-10 select-none">
-      <h1 class="space-grotesk text-4xl lg:text-6xl font-bold tracking-tight text-white mb-3">
-        paléX <span class="text-purple-400">App Store</span>
-      </h1>
-      <p class="text-base lg:text-xl text-gray-400 font-medium">
-        Where Great Apps Find Their Audience.
-      </p>
-    </header>
+    <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-4 mb-8 border-b border-gray-100">
+      <button id="pill-all" onclick="filterPlatform('all')" class="platform-pill active px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-700 hover:border-gray-400 whitespace-nowrap">
+        All
+      </button>
+      <button id="pill-android" onclick="filterPlatform('android')" class="platform-pill px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-700 hover:border-gray-400 whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5516 0 .9997.4482.9997.9993-.0004.5511-.4482.9997-.9997.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5516 0 .9997.4482.9997.9993-.0004.5511-.4482.9997-.9997.9997m11.4245-5.2894l1.8614-3.2235c.1192-.2069.0485-.4713-.1584-.5904-.2061-.1197-.4717-.0485-.5904.1579l-1.8842 3.2625C15.6293 8.9141 13.878 8.4411 12 8.4411c-1.8784 0-3.63.473-5.1262 1.2184L4.9896 6.397c-.1187-.2064-.3843-.2776-.5904-.1579-.2069.1192-.2776.3835-.1584.5904l1.8614 3.2235C2.6953 12.0163.4687 15.3995 0 19.3879h24c-.4687-3.9884-2.6953-7.3716-6.1015-9.3359"/></svg>
+        Android
+      </button>
+      <button id="pill-ios" onclick="filterPlatform('ios')" class="platform-pill px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-700 hover:border-gray-400 whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.57 2.95-1.39z"/></svg>
+        iOS
+      </button>
+      <button id="pill-pc" onclick="filterPlatform('pc')" class="platform-pill px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-700 hover:border-gray-400 whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M0 12l10.5-1.45V3L0 4.44V12zm11.55-1.6l12.45-1.72V3L11.55 4.6v5.8zM24 13.31l-12.45-1.7V21l12.45-1.6V13.31zM10.5 11.48L0 11.6v6.4l10.5 1.5v-8.02z"/></svg>
+        PC Windows
+      </button>
+    </div>
 
-    <main class="iphone-mockup flex flex-col z-10 select-none">
-      <div class="notch"></div>
+    <main class="space-y-16">
       
-      <div class="flex justify-between items-center px-6 pt-3 pb-2 text-xs font-semibold text-white z-40 relative">
-        <div id="live-time">9:41</div>
-        <div class="flex items-center gap-1.5 opacity-90">
-          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M2 10h1v1H2zm3-2h1v3H5zm3-3h1v6H8zm3-2h1v8h-1zm3-3h1v11h-1z"/></svg>
-          <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor"><path d="M7 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm-4.2-3.3a6 6 0 0 1 8.4 0l-1 1a4.5 4.5 0 0 0-6.4 0l-1-1Zm-2-2a9 9 0 0 1 12.4 0l-1 1a7.5 7.5 0 0 0-10.4 0l-1-1Z"/></svg>
-          <svg width="22" height="11" viewBox="0 0 22 11" fill="currentColor"><rect x="0.5" y="0.5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor"/><rect x="2.5" y="2.5" width="14" height="6" rx="1.5"/><path d="M20 3.5h1.5v4H20z" fill="currentColor"/></svg>
-        </div>
-      </div>
-
-      <div class="flex-1 flex flex-col overflow-y-auto no-scrollbar px-5 pt-4 pb-12 relative">
+      <section id="android-section" class="scroll-mt-24 target-platform-section">
+        <h2 class="space-grotesk text-2xl font-bold text-[#26004d] mb-6 flex items-center gap-2">
+          Android Platforms
+        </h2>
         
-        <div class="mb-4">
-          <p class="text-[11px] font-bold text-purple-400 tracking-wider uppercase">Discover</p>
-          <h2 class="text-2xl font-bold tracking-tight text-white space-grotesk">paléX Library</h2>
+        <div class="mb-10">
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Recommended Apps</h3>
+          <div id="android-apps-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
         </div>
 
-        <div class="relative mb-6">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-4 width-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input type="text" id="search-input" placeholder="Search apps..." class="w-full bg-zinc-800/80 border border-zinc-700/50 rounded-xl py-2 pl-9 pr-4 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors">
+        <div>
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Featured Games</h3>
+          <div id="android-games-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
+        </div>
+      </section>
+
+      <section id="ios-section" class="scroll-mt-24 target-platform-section">
+        <h2 class="space-grotesk text-2xl font-bold text-[#26004d] mb-6 flex items-center gap-2">
+          iOS Platforms
+        </h2>
+        
+        <div class="mb-10">
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Recommended Apps</h3>
+          <div id="ios-apps-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
         </div>
 
-        <div id="apps-container" class="space-y-3.5">
-          </div>
-      </div>
-
-      <div id="detail-overlay" class="absolute inset-0 bg-zinc-950 translate-y-full transition-transform duration-300 ease-out z-40 flex flex-col pt-12 pb-8 px-6">
-        <button id="close-detail" class="absolute top-4 left-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full p-2 focus:outline-none transition-colors">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        <div class="flex-1 flex flex-col justify-center items-center text-center mt-6 overflow-y-auto no-scrollbar">
-          <div id="detail-icon" class="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold text-3xl shadow-2xl mb-6 overflow-hidden">
-            </div>
-          <h3 id="detail-name" class="space-grotesk text-3xl font-bold text-white mb-2"></h3>
-          <p id="detail-desc" class="text-sm text-gray-300 leading-relaxed max-w-xs mb-8"></p>
-
-          <a id="detail-download-btn" href="#" target="_blank" rel="noopener noreferrer" class="w-48 bg-purple-600 hover:bg-purple-500 text-white text-center font-bold py-3.5 px-6 rounded-full shadow-lg transform active:scale-95 transition duration-150">
-            DOWNLOAD
-          </a>
+        <div>
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Featured Games</h3>
+          <div id="ios-games-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
         </div>
-      </div>
+      </section>
 
-      <div class="absolute bottom-1 left-0 right-0 flex justify-center py-2 z-50 pointer-events-none">
-        <div class="home-indicator"></div>
-      </div>
+      <section id="pc-section" class="scroll-mt-24 target-platform-section">
+        <h2 class="space-grotesk text-2xl font-bold text-[#26004d] mb-6 flex items-center gap-2">
+          PC Platforms
+        </h2>
+        
+        <div class="mb-10">
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Recommended Apps</h3>
+          <div id="pc-apps-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
+        </div>
+
+        <div>
+          <h3 class="space-grotesk text-lg font-bold text-gray-500 mb-4 border-b border-gray-100 pb-2">Featured Games</h3>
+          <div id="pc-games-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
+        </div>
+      </section>
+
     </main>
 
+    <footer class="mt-20 py-8 border-t border-gray-100 text-center text-sm text-gray-500">
+      <a href="https://palexdigital.pages.dev/" target="_blank" rel="noopener noreferrer" class="hover:text-purple-700 transition-colors font-medium">
+        Developed By palexdigital
+      </a>
+    </footer>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+  <div id="preview-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl w-full max-w-2xl overflow-hidden relative shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]">
+      <button onclick="closePreview()" class="absolute top-4 left-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full p-2 focus:outline-none transition-colors z-10">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="p-6 border-b border-gray-100 flex items-center justify-between pt-14">
+        <div class="flex-1">
+          <h3 id="modal-name" class="space-grotesk text-2xl font-bold text-gray-900"></h3>
+          <p id="modal-meta" class="text-xs font-semibold uppercase tracking-wider text-purple-700 mt-1"></p>
+        </div>
+        <div id="modal-logo-container" class="w-16 h-16 rounded-2xl flex-shrink-0 ml-4 overflow-hidden shadow-md"></div>
+      </div>
+
+      <div class="p-6 overflow-y-auto no-scrollbar space-y-6 flex-1">
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Screenshots</p>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="aspect-[9/16] rounded-xl bg-gradient-to-b from-purple-100 to-indigo-100 border border-purple-200/40 flex items-center justify-center text-[10px] text-purple-400 font-medium shadow-inner">Preview 1</div>
+            <div class="aspect-[9/16] rounded-xl bg-gradient-to-b from-purple-100 to-indigo-100 border border-purple-200/40 flex items-center justify-center text-[10px] text-purple-400 font-medium shadow-inner">Preview 2</div>
+            <div class="aspect-[9/16] rounded-xl bg-gradient-to-b from-purple-100 to-indigo-100 border border-purple-200/40 flex items-center justify-center text-[10px] text-purple-400 font-medium shadow-inner">Preview 3</div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Description</p>
+          <p id="modal-desc" class="text-sm text-gray-600 leading-relaxed"></p>
+        </div>
+
+        <div class="bg-purple-50 rounded-2xl p-4 space-y-2 text-xs border border-purple-100/50">
+          <div><strong class="text-purple-900">Features:</strong> <span id="modal-features" class="text-zinc-700"></span></div>
+          <div><strong class="text-purple-900">Functions:</strong> <span id="modal-functions" class="text-zinc-700"></span></div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end">
+        <a id="modal-download-btn" href="#" target="_blank" rel="noopener noreferrer" class="bg-[#26004d] hover:bg-[#3d007a] text-white text-xs font-bold py-3 px-6 rounded-xl transition-colors tracking-wide uppercase shadow-md">
+          Download Now
+        </a>
+      </div>
+    </div>
+  </div>
+
   <script>
-
     /* ================================================================
-       EDIT YOUR APPS HERE — works directly in GitHub's web editor.
-
-       For each app, customize:
-         name  : the app name displayed on lists and product details.
-         desc  : the targeted marketing description copy text.
-         image : fully validated asset image source URL (Falls back to default styling elegantly if missing).
-         link  : production landing destination target action address.
-    ================================================================ */
+       EDIT YOUR APPS HERE
+       
+       Platform choices: "android", "ios", "pc"
+       Type choices:     "app", "game"
+       ================================================================ */
     const APPS = [
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
-      {
-        name:  "XXXXXXXXXX",
-        desc:  "XXXXXXXXXX",
-        image: "XXXXXXXXXX",
-        link:  "XXXXXXXXXX"
-      },
+      // Android Apps Folder
+      { id: 1, name: "xxx-comingsoon-xxx", platform: "android", type: "app", desc: "Full creative asset development studio engine.", features: "AI Layers, Multi-track Timeline, RAW Exporting", functions: "Enables layered vector configuration modules.", image: "", link: "https://example.com/download1" },
+      { id: 2, name: "xxx-comingsoon-xxx", platform: "android", type: "app", desc: "Systematic utility orchestration hub node.", features: "Automated Scripts, Live Profiler, Cloud Node Assets", functions: "Maintains optimal deployment thread structures.", image: "", link: "https://example.com/download2" },
+      { id: 3, name: "xxx-comingsoon-xxx", platform: "android", type: "app", desc: "Advanced vector analytics matrix panel.", features: "Realtime Math Parsing, Telemetry Logs, Graphic Nodes", functions: "Coordinates cross-platform calculation protocols.", image: "", link: "https://example.com/download3" },
+      { id: 4, name: "xxx-comingsoon-xxx", platform: "android", type: "app", desc: "Secure encryption dynamic utility locker.", features: "Biometric Matrix, Multi-factor Tokens, Remote Keys", functions: "Secures internal file directory environments.", image: "", link: "https://example.com/download4" },
+      
+      // Android Games Folder
+      { id: 5, name: "xxx-comingsoon-xxx", platform: "android", type: "game", desc: "Fast synthwave endless infinite runner framework.", features: "Procedural Generation, Custom Avatars, Global Ranking", functions: "Tests reflexive coordination frame timelines.", image: "", link: "https://example.com/download5" },
+      { id: 6, name: "xxx-comingsoon-xxx", platform: "android", type: "game", desc: "Tactical isometric strategy circuit array.", features: "Real-time AI Nodes, Sandbox Maps, Resource Calibration", functions: "Simulates environmental matrix configuration logs.", image: "", link: "https://example.com/download6" },
+      { id: 7, name: "xxx-comingsoon-xxx", platform: "android", type: "game", desc: "Cyberpunk puzzle grid code decryptor.", features: "Logic Timers, Custom Decoders, Procedural Arrays", functions: "Provides cognitive algorithmic execution models.", image: "", link: "https://example.com/download7" },
+      { id: 8, name: "xxx-comingsoon-xxx", platform: "android", type: "game", desc: "Arcade orbital trajectory space simulation.", features: "Physics Models, Custom Shaders, Space Asset Editing", functions: "Models gravitational calculation telemetry pipelines.", image: "", link: "https://example.com/download8" },
+
+      // iOS Apps Folder
+      { id: 9, name: "xxx-comingsoon-xxx", platform: "ios", type: "app", desc: "Distraction-free rich markdown editor studio.", features: "iCloud Nodes, Custom Typography, Live Word Counter", functions: "Streamlines documentation generation frameworks.", image: "", link: "https://example.com/download9" },
+      { id: 10, name: "xxx-comingsoon-xxx", platform: "ios", type: "app", desc: "Mobile system layout orchestration layer.", features: "Widget Presets, Custom Shortcuts, Event Pipelines", functions: "Organizes application workspace configurations.", image: "", link: "https://example.com/download10" },
+      { id: 11, name: "xxx-comingsoon-xxx", platform: "ios", type: "app", desc: "Acoustic signal processor framework engine.", features: "Hz Equalizers, Live Input Monitor, Waveform Rendering", functions: "Calibrates output frequency alignment protocols.", image: "", link: "https://example.com/download11" },
+
+      // iOS Games Folder
+      { id: 12, name: "xxx-comingsoon-xxx", platform: "ios", type: "game", desc: "Arcade circuit telemetry racing engine simulation.", features: "Asynchronous Duels, Dynamic Physics, Performance Logs", functions: "Calculates realistic traction variance attributes.", image: "", link: "https://example.com/download12" },
+      { id: 13, name: "xxx-comingsoon-xxx", platform: "ios", type: "game", desc: "Turn-based tactical rogue dungeon explorer.", features: "Randomized Loot, Card Synergies, Permadeath Tracking", functions: "Processes procedural floor layout matrices.", image: "", link: "https://example.com/download13" },
+
+      // PC Apps Folder
+      { id: 14, name: "xxx-comingsoon-xxx", platform: "pc", type: "app", desc: "System optimization workstation core manager.", features: "Thread Control, Sandbox Modules, System Health Logs", functions: "Configures network communication socket pipelines.", image: "", link: "https://example.com/download14" },
+      { id: 15, name: "xxx-comingsoon-xxx", platform: "pc", type: "app", desc: "Integrated asset compiler engine module.", features: "Multi-language Support, Code Linking, Error Parsing", functions: "Builds responsive runtime presentation formats.", image: "", link: "https://example.com/download15" },
+
+      // PC Games Folder
+      { id: 16, name: "xxx-comingsoon-xxx", platform: "pc", type: "game", desc: "Isometric espionage tactical deployment simulator.", features: "Raytraced Occlusion, Map APIs, Mod Extension Assets", functions: "Models threat parameter algorithms seamlessly.", image: "", link: "https://example.com/download16" },
+      { id: 17, name: "xxx-comingsoon-xxx", platform: "pc", type: "game", desc: "Real-time galactic colonization resource system.", features: "Massive Sector Grids, Trade Logistics, Fleet Design", functions: "Computes complex macro-economic matrix data loops.", image: "", link: "https://example.com/download17" }
     ];
     /* ================================================================ */
 
-    // Render local device clock system output
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const timeString = `${hours}:${minutes}`;
-      document.getElementById('live-time').textContent = timeString;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    const appsContainer = document.getElementById('apps-container');
-    const searchInput = document.getElementById('search-input');
-    const detailOverlay = document.getElementById('detail-overlay');
-    const closeDetail = document.getElementById('close-detail');
-
-    const detailIcon = document.getElementById('detail-icon');
-    const detailName = document.getElementById('detail-name');
-    const detailDesc = document.getElementById('detail-desc');
-    const detailDownloadBtn = document.getElementById('detail-download-btn');
-
-    // Generate elements dynamically across data indexes
     function renderApps(filterText = '') {
-      appsContainer.innerHTML = '';
+      const targets = {
+        'android-app': document.getElementById('android-apps-container'),
+        'android-game': document.getElementById('android-games-container'),
+        'ios-app': document.getElementById('ios-apps-container'),
+        'ios-game': document.getElementById('ios-games-container'),
+        'pc-app': document.getElementById('pc-apps-container'),
+        'pc-game': document.getElementById('pc-games-container'),
+      };
+
+      // Clear layout nodes cleanly
+      Object.values(targets).forEach(el => { if(el) el.innerHTML = ''; });
+
       const filtered = APPS.filter(app => app.name.toLowerCase().includes(filterText.toLowerCase()));
 
-      if (filtered.length === 0) {
-        appsContainer.innerHTML = `<p class="text-center text-sm text-gray-500 py-8">No applications matched query.</p>`;
-        return;
-      }
-
       filtered.forEach(app => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800/40 rounded-2xl p-3 cursor-pointer transition-all active:scale-[0.98]';
+        const key = `${app.platform}-${app.type}`;
+        const container = targets[key];
         
-        // Circular profile icon composition elements
-        const iconContainer = document.createElement('div');
-        iconContainer.className = 'w-11 h-11 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md';
-        
+        if (!container) return;
+
+        const card = document.createElement('div');
+        card.className = 'group flex flex-col bg-white rounded-2xl p-2 transition-all hover:bg-gray-50';
+
+        // App Square Icon Element Composition (Triggers modal preview on click)
+        let iconHtml = `<div onclick="openPreview(${app.id})" class="w-full aspect-square rounded-2xl bg-gradient-to-tr from-[#26004d] to-purple-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-sm mb-3 cursor-pointer transform active:scale-95 transition-transform select-none">
+                          ${app.platform.substring(0, 1).toUpperCase()}${app.type.substring(0, 1).toUpperCase()}
+                        </div>`;
         if (app.image) {
-          iconContainer.innerHTML = `<img src="${app.image}" alt="${app.name}" class="w-full h-full object-cover">`;
-        } else {
-          iconContainer.textContent = app.name.substring(0, 2).toUpperCase();
+          iconHtml = `<img onclick="openPreview(${app.id})" src="${app.image}" alt="${app.name}" class="w-full aspect-square rounded-2xl object-cover shadow-sm mb-3 cursor-pointer transform active:scale-95 transition-transform">`;
         }
 
-        const details = document.createElement('div');
-        details.className = 'flex-1 min-w-0 mx-3';
-        details.innerHTML = `
-          <h4 class="text-sm font-semibold text-white truncate">${app.name}</h4>
-          <p class="text-xs text-gray-400 truncate mt-0.5">${app.desc}</p>
+        card.innerHTML = `
+          ${iconHtml}
+          <div class="flex-1 min-w-0 px-1">
+            <h4 class="text-xs sm:text-sm font-semibold text-gray-900 truncate group-hover:text-purple-900">${app.name}</h4>
+            <p class="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-2 h-8 leading-snug">${app.desc}</p>
+            
+            <div class="mt-2.5 space-y-1 pt-2 border-t border-gray-100 text-[10px] text-gray-600 hidden sm:block">
+              <div class="truncate"><strong class="text-[#26004d]">Features:</strong> ${app.features}</div>
+              <div class="truncate"><strong class="text-[#26004d]">Functions:</strong> ${app.functions}</div>
+            </div>
+          </div>
+          <div class="mt-3 px-1">
+            <a href="${app.link || '#'}" class="w-full inline-block text-center bg-gray-100 hover:bg-[#26004d] hover:text-white text-[#26004d] text-[11px] font-bold py-2 rounded-xl transition-colors tracking-wide uppercase">
+              Download
+            </a>
+          </div>
         `;
 
-        const actionBtn = document.createElement('span');
-        actionBtn.className = 'bg-zinc-800 hover:bg-purple-600 text-[11px] font-bold text-purple-400 hover:text-white px-3.5 py-1 rounded-full transition-colors tracking-wide uppercase';
-        actionBtn.textContent = 'GET';
+        container.appendChild(card);
+      });
 
-        row.appendChild(iconContainer);
-        row.appendChild(details);
-        row.appendChild(actionBtn);
-
-        // Click handler to view app details
-        row.addEventListener('click', () => {
-          if (app.image) {
-            detailIcon.innerHTML = `<img src="${app.image}" alt="${app.name}" class="w-full h-full object-cover">`;
-          } else {
-            detailIcon.innerHTML = `<span>${app.name.substring(0, 2).toUpperCase()}</span>`;
-          }
-          detailName.textContent = app.name;
-          detailDesc.textContent = app.desc;
-          detailDownloadBtn.href = app.link || '#';
-          
-          detailOverlay.classList.remove('translate-y-full');
-        });
-
-        appsContainer.appendChild(row);
+      // Handle blank structural fallbacks safely
+      Object.entries(targets).forEach(([key, el]) => {
+        if (el && el.children.length === 0) {
+          el.innerHTML = `<p class="text-xs text-gray-400 italic py-4 col-span-full">No matching entries discovered.</p>`;
+        }
       });
     }
 
-    // Input events for real-time search filtering
-    searchInput.addEventListener('input', (e) => renderApps(e.target.value));
-    closeDetail.addEventListener('click', () => detailOverlay.classList.add('translate-y-full'));
+    function openPreview(appId) {
+      const app = APPS.find(a => a.id === appId);
+      if (!app) return;
 
-    // Initialize display feed runtime tracking
-    renderApps();
+      document.getElementById('modal-name').textContent = app.name;
+      document.getElementById('modal-meta').textContent = `${app.platform} • ${app.type}`;
+      document.getElementById('modal-desc').textContent = app.desc;
+      document.getElementById('modal-features').textContent = app.features;
+      document.getElementById('modal-functions').textContent = app.functions;
+      
+      const downloadBtn = document.getElementById('modal-download-btn');
+      downloadBtn.href = app.link || '#';
 
-    /* Procedural Ambient Silk Background Animation Logic */
-    (function() {
-      const canvas = document.getElementById('silk-canvas');
-      const ctx = canvas.getContext('2d');
-      let W, H, t = 0;
-      function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-      resize();
-      window.addEventListener('resize', resize);
-      function wait(cb) {
-        typeof SimplexNoise !== 'undefined' ? cb() : setTimeout(() => wait(cb), 40);
+      const logoContainer = document.getElementById('modal-logo-container');
+      if (app.image) {
+        logoContainer.innerHTML = `<img src="${app.image}" alt="${app.name}" class="w-full h-full object-cover">`;
+      } else {
+        logoContainer.innerHTML = `<div class="w-full h-full bg-gradient-to-tr from-[#26004d] to-purple-600 flex items-center justify-center text-white font-bold text-lg">${app.platform.substring(0, 1).toUpperCase()}${app.type.substring(0, 1).toUpperCase()}</div>`;
       }
-      wait(() => {
-        const s = new SimplexNoise();
-        function draw() {
-          ctx.fillStyle = '#2e2a33';
-          ctx.fillRect(0, 0, W, H);
-          for (let i = 0; i < 90; i++) {
-            const y0 = (i / 90) * H;
-            ctx.beginPath(); ctx.moveTo(0, y0);
-            for (let j = 1; j <= 70; j++) {
-              const x = (j / 70) * W;
-              ctx.lineTo(
-                x + s.noise3D(x * 0.003, y0 * 0.003, t * 0.008) * 60,
-                y0 + s.noise3D(x * 0.003 + 100, y0 * 0.003, t * 0.008) * 18
-              );
-            }
-            const hue = 270 + s.noise3D(i * 0.12, 0, t * 0.005) * 30;
-            const alpha = 0.04 + Math.abs(s.noise3D(i * 0.15, 1, t * 0.004)) * 0.08;
-            ctx.strokeStyle = `hsla(${hue},50%,65%,${alpha})`;
-            ctx.lineWidth = 1.5; ctx.stroke();
+
+      document.getElementById('preview-modal').classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closePreview() {
+      document.getElementById('preview-modal').classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    /* Core Layout Filtering and Sorting Architectures */
+    function filterPlatform(platform) {
+      const sections = document.querySelectorAll('.target-platform-section');
+      const pills = document.querySelectorAll('.platform-pill');
+      
+      // Update interactive navigation tabs styling layout active loops
+      pills.forEach(pill => pill.classList.remove('active'));
+      const activePill = document.getElementById(`pill-${platform}`);
+      if (activePill) activePill.classList.add('active');
+
+      sections.forEach(section => {
+        if (platform === 'all') {
+          section.style.display = 'block';
+        } else {
+          if (section.id === `${platform}-section`) {
+            section.style.display = 'block';
+          } else {
+            section.style.display = 'none';
           }
-          t++; requestAnimationFrame(draw);
         }
-        draw();
       });
-    })();
+    }
+
+    function filterSidebar(platform) {
+      toggleSidebar(false);
+      filterPlatform(platform);
+      if(platform !== 'all') {
+        document.getElementById(`${platform}-section`).scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function toggleSidebar(open) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      if (open) {
+        overlay.classList.remove('hidden');
+        setTimeout(() => {
+          overlay.classList.add('opacity-100');
+          sidebar.classList.remove('-translate-x-full');
+        }, 10);
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.remove('opacity-100');
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    // Input monitoring for global search matching
+    document.getElementById('search-input').addEventListener('input', (e) => renderApps(e.target.value));
+
+    // Complete setup pipeline instantiation
+    renderApps();
   </script>
 </body>
 </html>
